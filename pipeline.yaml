@@ -25,16 +25,15 @@ spec:
           value: $(params.repo-url)
         - name: revision
           value: $(params.branch-name)
-    - name: cat-readme
+    - name: promote-test
       runAfter: ["fetch-repo"]
+      taskRef:
+        name: promote
       workspaces:
         - name: source
           workspace: shared-data
-      taskSpec:
-        workspaces:
-          - name: source
-        steps:
-          - image: zshusers/zsh:4.3.15
-            script: |
-              #!/usr/bin/env zsh
-              cat $(workspaces.source.path)/README.md
+      params:
+        - name: base
+          value: test
+        - name: head
+          value: develop
