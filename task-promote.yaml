@@ -1,0 +1,30 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: promote
+spec:
+  workspaces:
+    - name: source
+  params:
+    - name: github-token-secret
+      type: string
+      description: name of the secret holding the github-token
+      default: github-token
+    - name: base
+      type: string
+      description: the PR base
+    - name: head
+      type: string
+      description: the PR head
+  steps:
+    - name: promote
+      image: localhost:5000/github-cli
+      script: |
+        echo $GITHUB_TOKEN | gh auth login --hostname github.com --with-token
+        gh pr create --title "Promote to $(params.base)" --base $(params.base) --head $(params.head) --body ""
+      env:
+        - name: GITHUB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: $(params.github-token-secret)
+              key: bot-token
