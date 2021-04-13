@@ -18,13 +18,43 @@ spec:
       type: string
       description: the PR head
   steps:
-    - name: promote
+    - name: raise-pr
       image: localhost:5000/github-cli
       script: |
         echo $TOKEN | gh auth login --hostname github.com --with-token
         echo Raising pr...
         cd /src
-        gh pr create --title "Promote to $(params.base)" --base $(params.base) --head $(params.head) --body ""
+        OUTPUT=$(gh pr create --title "Promote to $(params.base)" --base $(params.base) --head $(params.head) --body "")
+        PR_NUM=$(echo "$OUTPUT" | tail -n-1 | cut -d"/" -f 7)
+        echo "$PR_NUM" > /workspace/prnum.txt
+      env:
+        - name: TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: $(params.github-token-secret)
+              key: bot-token
+    - name: wait
+      image: localhost:5000/github-cli
+      script: |
+        echo $TOKEN | gh auth login --hostname github.com --with-token
+        PR_NUM=$(cat /workspace/prnum.txt)
+        echo "Waiting for $PR_NUM"
+
+        cd /src
+        PR_STATUS=$(gh pr view "$PR_NUM" | head -n2 | tail -n1)
+
+        until echo "$PR_STATUS" | grep "CLOSED\|MERGED"
+        do
+          PR_STATUS=$(gh pr view "$PR_NUM" | head -n2 | tail -n1)
+          echo waiting for PR $PR_NUM to be closed or merged
+          sleep 5
+        done
+
+        if echo "$PR_STATE" | grep "MERGED"; then
+            exit 1
+        fi
+
+        exit 0
       env:
         - name: TOKEN
           valueFrom:

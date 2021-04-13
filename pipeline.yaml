@@ -37,3 +37,15 @@ spec:
           value: test
         - name: head
           value: develop
+    - name: promote-production
+      runAfter: ["promote-test"]
+      taskRef:
+        name: promote
+      workspaces:
+        - name: source
+          workspace: shared-data
+      params:
+        - name: base
+          value: master
+        - name: head
+          value: test

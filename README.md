@@ -27,6 +27,12 @@ kubectl apply -f task-promote.yaml
 kubectl apply -f sources-pvc.yaml
 kubectl apply -f pipeline.yaml
 ```
+```
+kubectl delete -f task-git-clone.yaml
+kubectl delete -f task-promote.yaml
+kubectl delete -f sources-pvc.yaml
+kubectl delete -f pipeline.yaml
+```
 
 Create github token secret:
 ```
